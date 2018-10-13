@@ -31,7 +31,12 @@ namespace DijkstraAlgorithm
             graph.AddLink("D", "E", 1);
             graph.AddLink("B", "C", 5);
             graph.AddLink("E", "C", 5);
-            graph.Dij("A", "C");
+            var result = graph.Dij("A", "C");
+            result.Routes.ForEach((route) =>
+            {
+                Trace.WriteLine(String.Format("{0} -> {1} , {2}", route.From.Name, route.To.Name, route.Distance));
+            });
+            Trace.WriteLine(String.Format("Total Distance: {0}", result.TotalDistance));
             ;
         }
     }
@@ -46,7 +51,6 @@ namespace DijkstraAlgorithm
 
     public class Graph
     {
-        //public List<Route> Routes { get; set; } = new List<Route>();
 
         public List<Node> Nodes { get; set; } = new List<Node>();
         public List<Route> Routes { get; set; } = new List<Route>();
@@ -61,9 +65,15 @@ namespace DijkstraAlgorithm
             Routes.Add(new Route(from: from, to: to, distance: distance));
         }
 
+        public Route GetLink(Node node1, Node node2)
+        {
+            return Routes.Find((route) =>
+            {
+                return (route.From == node1 && route.To == node2) || (route.From == node2 && route.To == node1);
+            });
+        }
 
-
-        public double Dij(string from, string to)
+        public DijResult Dij(string from, string to)
         {
             var startNode = this[from];
             var endNode = this[to];
@@ -74,11 +84,11 @@ namespace DijkstraAlgorithm
             {
                 if (unvisitedNode == startNode)
                 {
-                    shortestDistancesFromStartNode.Add(unvisitedNode, new TableRow(0, null));
+                    shortestDistancesFromStartNode.Add(unvisitedNode, new ShortestPathsTableRow(0, startNode));
                 }
                 else
                 {
-                    shortestDistancesFromStartNode.Add(unvisitedNode, new TableRow(double.MaxValue, null));
+                    shortestDistancesFromStartNode.Add(unvisitedNode, new ShortestPathsTableRow(double.MaxValue, null));
                 }
             });
             var visitingNode = startNode;
@@ -132,17 +142,10 @@ namespace DijkstraAlgorithm
             }
             var dijResult = new DijResult();
             var dijResultRoutes = dijResult.Routes;
-
             var routeQuene = new Queue<Route>();
+            var result = shortestDistancesFromStartNode.GetDirResult(startNode: startNode, endNode: endNode, graph: this);
 
-
-
-            ;
-
-
-
-
-            return 0;
+            return result;
         }
 
 
@@ -168,6 +171,8 @@ namespace DijkstraAlgorithm
             }).ToList();
         }
 
+
+
         public Node this[string nodeName]
         {
             get
@@ -184,40 +189,38 @@ namespace DijkstraAlgorithm
         }
     }
 
-    public class ShortestPathsTable : Dictionary<Node, TableRow>
+    public class ShortestPathsTable : Dictionary<Node, ShortestPathsTableRow>
     {
         public Node StartNode { get; set; }
 
-        public DijResult GetDirResult(Node startNode, Node endNode)
+        public DijResult GetDirResult(Node startNode, Node endNode, Graph graph)
         {
             var result = new DijResult();
-            var routes = result.Routes;
+            var routes = result.Routes = new List<Route>();
+            Node tempStartNode = null;
+            Node tempEndNode = endNode;
+            while (tempStartNode != startNode)
+            {
 
-            return null;
-
-
-
-            //Node tempStartNode = null;
-            //Node tempEndNode = endNode;
-            //while (tempStartNode != startNode)
-            //{
-            //    tempStartNode = this[endNode].PreviousVertex;
-                
-            //}
-
+                //var row = this[endNode]
+                tempStartNode = this[tempEndNode].PreviousVertex;
+                var route = graph.GetLink(tempStartNode, tempEndNode);
+                routes.Add(new Route(from: tempStartNode, to: tempEndNode, distance: route.Distance));
+                tempEndNode = tempStartNode;
+            }
+            routes.Reverse();
+            return result;
         }
-
-
     }
 
-    public class TableRow
+    public class ShortestPathsTableRow
     {
-        public TableRow(double distance, Node previousVertex)
+        public ShortestPathsTableRow(double distance, Node previousVertex)
         {
             ShortestDistance = distance;
             PreviousVertex = previousVertex;
         }
-        public TableRow()
+        public ShortestPathsTableRow()
         {
 
         }
