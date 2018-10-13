@@ -1,6 +1,7 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -79,21 +80,20 @@ namespace DijkstraAlgorithm
 
             var startNode = this[from];
             var endNode = this[to];
-            List<Node> VisitedNodes = new List<Node>();
-            List<Node> UnvisitedNodes = new List<Node>(this.Nodes);
+            List<Node> visitedNodes = new List<Node>();
+            List<Node> unvisitedNodes = new List<Node>(this.Nodes);
 
             var shortestDistancesFromStartNode = new Dictionary<Node, TableRow>();
 
-
-            UnvisitedNodes.ForEach((unvisitedNode) =>
+            unvisitedNodes.ForEach((unvisitedNode) =>
             {
                 if (unvisitedNode == startNode)
                 {
-                    shortestDistancesFromStartNode.Add(unvisitedNode, new TableRow(0, startNode));
+                    shortestDistancesFromStartNode.Add(unvisitedNode, new TableRow(0, null));
                 }
                 else
                 {
-                    shortestDistancesFromStartNode.Add(unvisitedNode, new TableRow(double.MaxValue, startNode));
+                    shortestDistancesFromStartNode.Add(unvisitedNode, new TableRow(double.MaxValue, null));
                 }
             });
 
@@ -101,7 +101,120 @@ namespace DijkstraAlgorithm
 
 
 
+            var visitingNode = startNode;
+            var routes = RoutesContainGivenNode(startNode);
+            routes.ForEach((route) =>
+            {
+                var otherNode = route.OtherNode(visitingNode);
+                var tableRow = shortestDistancesFromStartNode[otherNode];
+                var oldDistance = tableRow.ShortestDistance;
+                var newDistance = route.Distance;
+                if (newDistance < oldDistance)
+                {
+                    tableRow.ShortestDistance = newDistance;
+                    tableRow.PreviousVertex = visitingNode;
+                }
+            });
+            unvisitedNodes.Remove(visitingNode);
+            visitedNodes.Add(visitingNode);
+
+            while (unvisitedNodes.Count != 0)
+            {
+                //var min = unvisitedNodes.Min(node => shortestDistancesFromStartNode[node].ShortestDistance);
+                var min = double.MaxValue;
+                Node closestNode = null;
+                unvisitedNodes.ForEach((node) =>
+                {
+                    var current = shortestDistancesFromStartNode[node].ShortestDistance;
+                    if (current < min)
+                    {
+                        min = current;
+                        closestNode = node;
+                    }
+
+                });
+
+                visitingNode = closestNode;
+
+
+                var routesInLoop = RoutesContainGivenNode(visitingNode);
+                //visitedNodes.ForEach((node) => {     routesInLoop.   }    )
+                //routesInLoop.ex
+
+                routesInLoop = RoutesContainGivenNode(visitingNode, visitedNodes);
+
+                //routesInLoop.ForEach((route) =>
+                //{
+
+                //});
+
+
+
+                //unvisitedNodes.
+
+
+
+                ;
+
+
+
+
+            }
+
+
+
+            ;
+
+
+
+
+
+
+            ;
+            //while (true)
+            //{
+
+
+
+            //    //Trace.WriteLine()
+
+
+            //    //#region Visit startNode
+
+
+
+
+            //    //#endregion
+            //}
+
+
+
+
+
             return 0;
+        }
+
+
+        public List<Route> RoutesContainGivenNode(Node givenNode, IEnumerable<Node> exceptNodes)
+        {
+            var routes = RoutesContainGivenNode(givenNode);
+            var processedRoutes = routes.Where((route) =>
+            {
+                var twoNode = new List<Node>() { route.From, route.To };
+                var intersetionNodes = twoNode.Intersect(exceptNodes).ToList();
+                ;
+                var count = intersetionNodes.Count;
+                return count == 0;
+            });
+            return processedRoutes.ToList();
+        }
+
+        public List<Route> RoutesContainGivenNode(Node givenNode)
+        {
+            return Routes.Where((route) =>
+            {
+                return (route.From == givenNode || route.To == givenNode);
+            }).ToList();
         }
 
         public Node this[string nodeName]
@@ -146,7 +259,6 @@ namespace DijkstraAlgorithm
     {
         public Route()
         {
-
         }
 
         public Route(Node from, Node to, double distance)
@@ -156,9 +268,28 @@ namespace DijkstraAlgorithm
             Distance = distance;
         }
 
+        public bool Has(Node node)
+        {
+            return (From == node || To == node);
+        }
+
+        public Node OtherNode(Node inputNode)
+        {
+            if (inputNode != From && inputNode != To)
+            {
+                throw new Exception("The node input does not exist in this route!");
+            }
+            return inputNode == From ? To : From;
+        }
+
         public Node From { get; set; }
         public Node To { get; set; }
         public double Distance { get; set; }
+
+        public override string ToString()
+        {
+            return String.Format("{0} {1} {2}", From.Name, To.Name, Distance);
+        }
     }
 
 
