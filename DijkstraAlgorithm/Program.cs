@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace DijkstraAlgorithm
 {
-    [Microsoft.VisualStudio.TestTools.UnitTesting.TestClass]
+    [TestClass]
     public class MyTestClass
     {
         /// <summary>
@@ -45,7 +45,27 @@ namespace DijkstraAlgorithm
     {
         static void Main(string[] args)
         {
-
+            var graph = new Graph()
+            {
+                Nodes = new List<Node>()
+                {
+                    new Node("A"),new Node("B"),new Node("C"),new Node("D"),new Node("E")
+                }
+            };
+            graph.AddLink("A", "B", 6);
+            graph.AddLink("A", "D", 1);
+            graph.AddLink("D", "B", 2);
+            graph.AddLink("E", "B", 2);
+            graph.AddLink("D", "E", 1);
+            graph.AddLink("B", "C", 5);
+            graph.AddLink("E", "C", 5);
+            var result = graph.Dij("A", "C");
+            result.Routes.ForEach((route) =>
+            {
+                Console.WriteLine(String.Format("{0} -> {1} , {2}", route.From.Name, route.To.Name, route.Distance));
+            });
+            Console.WriteLine(String.Format("Total Distance: {0}", result.TotalDistance));
+            Console.ReadLine();
         }
     }
 
@@ -144,7 +164,7 @@ namespace DijkstraAlgorithm
             var dijResultRoutes = dijResult.Routes;
             var routeQuene = new Queue<Route>();
             var result = shortestDistancesFromStartNode.GetDirResult(startNode: startNode, endNode: endNode, graph: this);
-
+            result.Graph = this;
             return result;
         }
 
@@ -181,13 +201,14 @@ namespace DijkstraAlgorithm
                 {
                     return this.Nodes.Where(node => node.Name == nodeName).FirstOrDefault();
                 }
-                catch (Exception ex)
+                catch (Exception )
                 {
                     throw new Exception("Cannot get node by this name!");
                 }
             }
         }
     }
+
 
     public class ShortestPathsTable : Dictionary<Node, ShortestPathsTableRow>
     {
@@ -274,6 +295,7 @@ namespace DijkstraAlgorithm
 
     public class DijResult
     {
+        public Graph Graph { get; set; }
         public double TotalDistance => Routes.Sum(route => route.Distance);
         public List<Route> Routes { get; set; }
     }
