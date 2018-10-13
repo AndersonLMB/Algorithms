@@ -11,6 +11,9 @@ namespace DijkstraAlgorithm
     [Microsoft.VisualStudio.TestTools.UnitTesting.TestClass]
     public class MyTestClass
     {
+        /// <summary>
+        /// Implement of this video https://www.youtube.com/watch?v=pVfj6mxhdMw
+        /// </summary>
         [TestMethod]
         public void MyTestMethod()
         {
@@ -28,27 +31,10 @@ namespace DijkstraAlgorithm
             graph.AddLink("D", "E", 1);
             graph.AddLink("B", "C", 5);
             graph.AddLink("E", "C", 5);
-
-
-
             graph.Dij("A", "C");
-
-            //graph.AddLink(graph["A"], graph["B"], 6);
-            //graph.AddLink(graph["A"], graph["D"],)
-
-
-
-
-
-
-
-
-            //var nodeE = graph["E"];
-            //var nodeE = graph.Nodes.Where(node => node.Name == "E");
             ;
         }
     }
-
 
     class Program
     {
@@ -75,16 +61,15 @@ namespace DijkstraAlgorithm
             Routes.Add(new Route(from: from, to: to, distance: distance));
         }
 
+
+
         public double Dij(string from, string to)
         {
-
             var startNode = this[from];
             var endNode = this[to];
             List<Node> visitedNodes = new List<Node>();
             List<Node> unvisitedNodes = new List<Node>(this.Nodes);
-
-            var shortestDistancesFromStartNode = new Dictionary<Node, TableRow>();
-
+            var shortestDistancesFromStartNode = new ShortestPathsTable();
             unvisitedNodes.ForEach((unvisitedNode) =>
             {
                 if (unvisitedNode == startNode)
@@ -96,11 +81,6 @@ namespace DijkstraAlgorithm
                     shortestDistancesFromStartNode.Add(unvisitedNode, new TableRow(double.MaxValue, null));
                 }
             });
-
-
-
-
-
             var visitingNode = startNode;
             var routes = RoutesContainGivenNode(startNode);
             routes.ForEach((route) =>
@@ -120,73 +100,44 @@ namespace DijkstraAlgorithm
 
             while (unvisitedNodes.Count != 0)
             {
-                //var min = unvisitedNodes.Min(node => shortestDistancesFromStartNode[node].ShortestDistance);
                 var min = double.MaxValue;
-                Node closestNode = null;
+                Node closestNodeUnvisited = null;
                 unvisitedNodes.ForEach((node) =>
                 {
                     var current = shortestDistancesFromStartNode[node].ShortestDistance;
                     if (current < min)
                     {
                         min = current;
-                        closestNode = node;
+                        closestNodeUnvisited = node;
                     }
-
                 });
-
-                visitingNode = closestNode;
-
-
-                var routesInLoop = RoutesContainGivenNode(visitingNode);
-                //visitedNodes.ForEach((node) => {     routesInLoop.   }    )
-                //routesInLoop.ex
-
-                routesInLoop = RoutesContainGivenNode(visitingNode, visitedNodes);
-
-                //routesInLoop.ForEach((route) =>
-                //{
-
-                //});
-
-
-
-                //unvisitedNodes.
-
-
-
+                visitingNode = closestNodeUnvisited;
+                var routesInLoop = RoutesContainGivenNode(visitingNode, visitedNodes);
+                routesInLoop.ForEach((route) =>
+                {
+                    var otherNode = route.OtherNode(visitingNode);
+                    var tableRow = shortestDistancesFromStartNode[otherNode];
+                    var oldDistance = tableRow.ShortestDistance;
+                    var newDistance = route.Distance + shortestDistancesFromStartNode[visitingNode].ShortestDistance;
+                    if (newDistance < oldDistance)
+                    {
+                        tableRow.ShortestDistance = newDistance;
+                        tableRow.PreviousVertex = visitingNode;
+                    }
+                    ;
+                });
+                unvisitedNodes.Remove(visitingNode);
+                visitedNodes.Add(visitingNode);
                 ;
-
-
-
-
             }
+            var dijResult = new DijResult();
+            var dijResultRoutes = dijResult.Routes;
+
+            var routeQuene = new Queue<Route>();
 
 
 
             ;
-
-
-
-
-
-
-            ;
-            //while (true)
-            //{
-
-
-
-            //    //Trace.WriteLine()
-
-
-            //    //#region Visit startNode
-
-
-
-
-            //    //#endregion
-            //}
-
 
 
 
@@ -231,6 +182,32 @@ namespace DijkstraAlgorithm
                 }
             }
         }
+    }
+
+    public class ShortestPathsTable : Dictionary<Node, TableRow>
+    {
+        public Node StartNode { get; set; }
+
+        public DijResult GetDirResult(Node startNode, Node endNode)
+        {
+            var result = new DijResult();
+            var routes = result.Routes;
+
+            return null;
+
+
+
+            //Node tempStartNode = null;
+            //Node tempEndNode = endNode;
+            //while (tempStartNode != startNode)
+            //{
+            //    tempStartNode = this[endNode].PreviousVertex;
+                
+            //}
+
+        }
+
+
     }
 
     public class TableRow
@@ -292,6 +269,11 @@ namespace DijkstraAlgorithm
         }
     }
 
+    public class DijResult
+    {
+        public double TotalDistance => Routes.Sum(route => route.Distance);
+        public List<Route> Routes { get; set; }
+    }
 
 
     public class Node
